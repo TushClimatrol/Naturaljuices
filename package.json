@@ -1,0 +1,16 @@
+{
+  "name": "naturaljuices-stripe-server",
+  "version": "1.0.0",
+  "description": "Stripe Checkout backend for the NaturalJuices store",
+  "main": "stripe-server.js",
+  "scripts": {
+    "start": "node stripe-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "stripe": "^16.0.0"
+  }
+}
