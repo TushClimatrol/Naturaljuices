@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Orders — Natural Juices</title>
+<style>
+  :root{
+    --bg:#f4f6f3; --card:#fff; --ink:#18241d; --mute:#5d6b62; --line:#dfe5df; --green:#1f6b3a; --green-d:#16512b;
+    --green-soft:#e6f2ea; --amber:#9a5b00; --amber-soft:#fff3d6; --red:#a3271f; --red-soft:#fde8e6; --blue:#1d5a8f; --blue-soft:#e3eff9;
+    --grey-soft:#eceeed; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  .hidden{display:none!important}
+  a{color:var(--green)}
+  /* ---------- sign in ---------- */
+  .login{max-width:360px;margin:12vh auto 0;padding:28px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+  .login h1{font-size:1.25rem;margin:0 0 4px}
+  .login p{color:var(--mute);margin:0 0 18px}
+  .field{display:block;margin-bottom:12px}
+  .field span{display:block;font-size:.8rem;font-weight:600;color:var(--mute);margin-bottom:4px}
+  input[type=text],input[type=password],input[type=search],input[type=date],input[type=email],select,textarea{
+    width:100%;padding:9px 11px;border:1px solid #c5cfc7;border-radius:8px;background:#fff}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+  .btn{padding:9px 16px;border-radius:8px;border:1px solid var(--green);background:var(--green);color:#fff;font-weight:600}
+  .btn:hover{background:var(--green-d)}
+  .btn.ghost{background:#fff;color:var(--green)}
+  .btn.ghost:hover{background:var(--green-soft)}
+  .btn.plain{border-color:#c5cfc7;background:#fff;color:var(--ink);font-weight:500}
+  .btn.plain:hover{background:var(--grey-soft)}
+  .btn.danger{border-color:#d9b1ad;background:#fff;color:var(--red);font-weight:500}
+  .btn:disabled{opacity:.55;cursor:default}
+  .err{color:var(--red);min-height:1.3em;margin:8px 0 0;font-size:.9rem}
+  /* ---------- layout ---------- */
+  header.top{background:var(--green);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header.top h1{font-size:1.05rem;margin:0;font-weight:700;letter-spacing:.01em}
+  header.top .sp{flex:1}
+  header.top button{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:6px 12px}
+  header.top button:hover{background:rgba(255,255,255,.14)}
+  header.top small{opacity:.85}
+  main{max-width:1240px;margin:0 auto;padding:18px 20px 60px}
+  .notice{padding:10px 14px;border-radius:var(--radius);margin-bottom:12px;border:1px solid}
+  .notice.warn{background:var(--amber-soft);border-color:#ecd08f;color:#5e3a00}
+  .notice.bad{background:var(--red-soft);border-color:#eab9b4;color:#6e1711}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .tile .k{font-size:.78rem;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .tile .v{font-size:1.5rem;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+  .tile .s{font-size:.82rem;color:var(--mute)}
+  .tile.hot{border-color:var(--green);background:var(--green-soft)}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:.9rem}
+  .tabs button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .bar input[type=search]{width:260px;max-width:100%}
+  .bar input[type=date]{width:150px}
+  .bar .sp{flex:1}
+  .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:820px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);background:#fafbfa;position:sticky;top:0}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#f6faf7}
+  tbody tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  td .sub{color:var(--mute);font-size:.84rem}
+  .items-cell{max-width:340px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.78rem;font-weight:600;white-space:nowrap}
+  .st-pending{background:var(--grey-soft);color:#4c5750}
+  .st-paid{background:var(--amber-soft);color:var(--amber)}
+  .st-processing{background:var(--blue-soft);color:var(--blue)}
+  .st-dispatched{background:var(--green-soft);color:var(--green-d)}
+  .st-delivered{background:#d5ead9;color:#0f3f20}
+  .st-cancelled,.st-refunded{background:var(--red-soft);color:var(--red)}
+  .tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:.72rem;font-weight:700;background:var(--red-soft);color:var(--red);margin-left:4px;white-space:nowrap}
+  .tag.test{background:#ece6fb;color:#4b2f99}
+  .empty{padding:44px 20px;text-align:center;color:var(--mute)}
+  .pager{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:12px;color:var(--mute);font-size:.9rem}
+  /* ---------- drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(15,25,19,.45);z-index:10}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(620px,100%);background:var(--bg);z-index:11;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.18)}
+  .drawer header{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;gap:10px;align-items:center;z-index:1}
+  .drawer header h2{margin:0;font-size:1.15rem}
+  .drawer header .sp{flex:1}
+  .drawer .body{padding:16px 18px 40px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+  .panel h3{margin:0 0 10px;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+  .row.total{border-top:1px solid var(--line);margin-top:6px;padding-top:9px;font-weight:700}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .check{display:flex;gap:8px;align-items:center;font-size:.9rem;margin:10px 0}
+  .hist{list-style:none;margin:0;padding:0;font-size:.88rem}
+  .hist li{padding:6px 0;border-bottom:1px dashed var(--line)}
+  .hist li:last-child{border:0}
+  .hist time{color:var(--mute);margin-right:8px;white-space:nowrap}
+  .saved{color:var(--green-d);font-size:.88rem;font-weight:600}
+  .slip-only{display:none}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr} main{padding:14px 12px 50px}}
+  @media print{
+    body{background:#fff}
+    header.top,main,.scrim,.no-print{display:none!important}
+    .drawer{position:static;width:auto;box-shadow:none;background:#fff;overflow:visible}
+    .drawer header{position:static;border:0;padding:0 0 10px}
+    .panel{border:0;padding:0 0 14px;margin:0}
+    .slip-only{display:block}
+  }
+</style>
+</head>
+<body>
+
+<section id="login" class="login hidden">
+  <h1>Natural Juices — orders</h1>
+  <p>Staff sign-in</p>
+  <form id="loginForm">
+    <label class="field"><span>Password</span><input type="password" id="pw" autocomplete="current-password" required></label>
+    <button class="btn" type="submit" style="width:100%">Sign in</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <h1>Natural Juices — orders</h1>
+    <small id="refreshed"></small>
+    <span class="sp"></span>
+    <button id="refreshBtn">Refresh</button>
+    <button id="logoutBtn">Sign out</button>
+  </header>
+  <main>
+    <div id="notices"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="bar">
+      <div class="tabs" id="tabs" role="group" aria-label="Filter by status"></div>
+    </div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="Search name, order no, email, postcode…" aria-label="Search orders">
+      <label class="sub" for="from">From</label><input type="date" id="from" aria-label="From date">
+      <label class="sub" for="to">To</label><input type="date" id="to" aria-label="To date">
+      <button class="btn plain" id="clearBtn">Clear</button>
+      <span class="sp"></span>
+      <a class="btn ghost" id="csvBtn" href="#" style="text-decoration:none">Download spreadsheet (CSV)</a>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Order</th><th>Placed</th><th>Customer</th><th>Items</th><th class="num">Total</th><th>Paid by</th><th>Status</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty hidden" id="empty"></div>
+    </div>
+    <div class="pager"><span id="count"></span><button class="btn plain" id="prev">← Newer</button><button class="btn plain" id="next">Older →</button></div>
+  </main>
+</div>
+
+<div class="scrim hidden" id="scrim"></div>
+<aside class="drawer hidden" id="drawer" aria-label="Order details"></aside>
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const gbp = p => '£' + (p/100).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const when = d => d ? new Date(d).toLocaleString('en-GB',{timeZone:'Europe/London',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+const STATUS = {pending:'Not paid', paid:'Paid — to send', processing:'Being packed', dispatched:'Dispatched', delivered:'Delivered', cancelled:'Cancelled', refunded:'Refunded'};
+const FLAGS = {'unverified':'Check PayPal', 'amount-mismatch':'Amount differs', 'address-check':'Check address', 'details-missing':'Details missing'};
+const TABS = [['open','To send'],['','All orders'],['dispatched','Dispatched'],['delivered','Delivered'],['refunded','Refunded'],['cancelled','Cancelled'],['pending','Unpaid baskets']];
+const state = { status:'open', q:'', from:'', to:'', offset:0, limit:50, total:0, open:null, info:{} };
+
+async function api(path, opts){
+  opts = opts || {};
+  const r = await fetch('/admin/api' + path, { method: opts.method || 'GET', credentials:'same-origin',
+    headers: opts.body ? {'Content-Type':'application/json'} : {}, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  if (r.status === 401) { showLogin(); throw new Error('Please sign in.'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Something went wrong (' + r.status + ')');
+  return j;
+}
+function showLogin(){ $('app').classList.add('hidden'); closeDrawer(); $('login').classList.remove('hidden'); $('pw').focus(); }
+
+async function boot(){
+  let s;
+  try { s = await (await fetch('/admin/api/session',{credentials:'same-origin'})).json(); } catch(e){ s = {}; }
+  state.info = s;
+  if (!s.passwordSet) { $('login').classList.remove('hidden'); $('loginForm').classList.add('hidden');
+    $('login').querySelector('p').textContent = 'The dashboard password has not been set on the server yet (ADMIN_PASSWORD).'; return; }
+  if (!s.signedIn) return showLogin();
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  const n = [];
+  if (!s.database) n.push('<div class="notice bad"><b>The order database is not connected</b> — orders are not being saved. ' + esc(s.databaseError||'') + '</div>');
+  if (s.testMode) n.push('<div class="notice warn"><b>Card payments are in TEST mode.</b> Card orders marked “TEST” are not real money. PayPal orders are real.</div>');
+  if (!s.paypalVerify) n.push('<div class="notice warn"><b>PayPal orders are not checked automatically yet.</b> Orders marked “Check PayPal” were reported by the shop page — confirm the money in your PayPal account before sending.</div>');
+  $('notices').innerHTML = n.join('');
+  renderTabs(); refresh();
+}
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('loginErr').textContent = '';
+  try {
+    const r = await fetch('/admin/api/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:$('pw').value})});
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(j.error || 'Could not sign in');
+    $('pw').value = ''; boot();
+  } catch(err){ $('loginErr').textContent = err.message; }
+});
+$('logoutBtn').addEventListener('click', async () => { await fetch('/admin/api/logout',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'}); showLogin(); });
+$('refreshBtn').addEventListener('click', refresh);
+
+function renderTabs(){
+  $('tabs').innerHTML = TABS.map(t => '<button data-s="'+t[0]+'" aria-pressed="'+(state.status===t[0])+'">'+esc(t[1])+'</button>').join('');
+}
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; state.status = b.dataset.s; state.offset = 0; renderTabs(); loadOrders(); });
+let qTimer;
+$('q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = $('q').value.trim(); state.offset = 0; if (state.q && state.status) { state.status = ''; renderTabs(); } loadOrders(); }, 300); });
+$('from').addEventListener('change', () => { state.from = $('from').value; state.offset = 0; loadOrders(); });
+$('to').addEventListener('change', () => { state.to = $('to').value; state.offset = 0; loadOrders(); });
+$('clearBtn').addEventListener('click', () => { $('q').value = $('from').value = $('to').value = ''; state.q = state.from = state.to = ''; state.offset = 0; loadOrders(); });
+$('prev').addEventListener('click', () => { state.offset = Math.max(0, state.offset - state.limit); loadOrders(); });
+$('next').addEventListener('click', () => { state.offset += state.limit; loadOrders(); });
+
+function query(extra){
+  const p = new URLSearchParams();
+  if (state.status) p.set('status', state.status);
+  if (state.q) p.set('q', state.q);
+  if (state.from) p.set('from', state.from);
+  if (state.to) p.set('to', state.to);
+  Object.keys(extra||{}).forEach(k => p.set(k, extra[k]));
+  return p.toString();
+}
+function flagTags(o){
+  let h = '';
+  if (!o.livemode) h += '<span class="tag test">TEST</span>';
+  String(o.flags||'').split(/\s+/).filter(Boolean).forEach(f => { h += '<span class="tag">'+esc(FLAGS[f]||f)+'</span>'; });
+  return h;
+}
+const itemsLine = items => (items||[]).map(i => i.qty + ' × ' + i.name + (i.pack ? ' (' + i.pack + ')' : '')).join(', ');
+
+async function loadSummary(){
+  try {
+    const s = await api('/summary');
+    const t = (k,v,sub,hot) => '<div class="tile'+(hot?' hot':'')+'"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="s">'+sub+'</div></div>';
+    $('tiles').innerHTML =
+      t('To send', s.to_send, s.flagged ? s.flagged + ' need a check' : 'paid, not yet dispatched', s.to_send > 0) +
+      t('Today', gbp(s.today_pence), s.today_n + (s.today_n === 1 ? ' order' : ' orders')) +
+      t('Last 7 days', gbp(s.week_pence), s.week_n + (s.week_n === 1 ? ' order' : ' orders')) +
+      t('Last 30 days', gbp(s.month_pence), s.month_n + (s.month_n === 1 ? ' order' : ' orders')) +
+      t('All time', gbp(s.all_pence), s.all_n + (s.all_n === 1 ? ' order' : ' orders'));
+  } catch(e){ $('tiles').innerHTML = ''; }
+}
+async function loadOrders(){
+  $('csvBtn').href = '/admin/api/export.csv?' + query();
+  try {
+    const d = await api('/orders?' + query({limit:state.limit, offset:state.offset}));
+    state.total = d.total;
+    $('rows').innerHTML = d.orders.map(o =>
+      '<tr data-id="'+o.id+'" tabindex="0"><td><b>'+esc(o.order_no)+'</b>'+flagTags(o)+'</td>' +
+      '<td>'+esc(when(o.created_at))+'</td>' +
+      '<td>'+esc(o.customer_name||'—')+'<div class="sub">'+esc(o.postcode||'')+'</div></td>' +
+      '<td class="items-cell">'+esc(itemsLine(o.items)||'—')+'</td>' +
+      '<td class="num">'+gbp(o.total_pence)+'</td>' +
+      '<td>'+(o.payment_method==='paypal'?'PayPal':'Card')+'</td>' +
+      '<td><span class="pill st-'+esc(o.status)+'">'+esc(STATUS[o.status]||o.status)+'</span>'+(o.tracking_number?'<div class="sub">'+esc(o.tracking_number)+'</div>':'')+'</td></tr>').join('');
+    const none = !d.orders.length;
+    $('empty').classList.toggle('hidden', !none);
+    if (none) $('empty').textContent = (state.q||state.from||state.to) ? 'No orders match that search.' :
+      state.status === 'open' ? 'Nothing waiting to be sent. New paid orders will appear here.' : 'No orders here yet.';
+    const a = d.total ? state.offset + 1 : 0, b = Math.min(d.total, state.offset + d.orders.length);
+    $('count').textContent = d.total ? ('Showing ' + a + '–' + b + ' of ' + d.total + ' · ' + gbp(d.sum_pence) + ' in total') : '';
+    $('prev').disabled = state.offset === 0; $('next').disabled = b >= d.total;
+    $('refreshed').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  } catch(e){ $('rows').innerHTML = ''; $('empty').classList.remove('hidden'); $('empty').textContent = e.message; }
+}
+function refresh(){ loadSummary(); loadOrders(); }
+setInterval(() => { if (!$('app').classList.contains('hidden') && !state.open && !document.hidden) refresh(); }, 60000);
+
+$('rows').addEventListener('click', e => { const tr = e.target.closest('tr'); if (tr) openOrder(+tr.dataset.id); });
+$('rows').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr'); if (tr) openOrder(+tr.dataset.id); } });
+
+// ---------- order drawer ----------
+function closeDrawer(){ state.open = null; $('drawer').classList.add('hidden'); $('scrim').classList.add('hidden'); }
+$('scrim').addEventListener('click', () => { closeDrawer(); refresh(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.open) { closeDrawer(); refresh(); } });
+
+async function openOrder(id){
+  try { const d = await api('/orders/' + id); state.open = id; drawOrder(d.order, d.events); $('scrim').classList.remove('hidden'); $('drawer').classList.remove('hidden'); $('drawer').scrollTop = 0; }
+  catch(e){ $('empty').classList.remove('hidden'); $('empty').textContent = e.message; }
+}
+function drawOrder(o, events, savedMsg){
+  const f = (id,label,val,type) => '<label class="field"><span>'+label+'</span><input type="'+(type||'text')+'" id="'+id+'" value="'+esc(val)+'"></label>';
+  const flags = String(o.flags||'').split(/\s+/).filter(Boolean);
+  const warn = [];
+  if (!o.livemode) warn.push('<div class="notice warn no-print"><b>TEST order</b> — placed with a Stripe test card. No real money was taken; do not send goods.</div>');
+  if (flags.includes('unverified')) warn.push('<div class="notice warn no-print"><b>Check PayPal first.</b> This PayPal payment has not been confirmed automatically. Find reference <b>'+esc(o.paypal_order_id||o.payment_ref||'')+'</b> (or the customer’s name and amount) in your PayPal account before sending.</div>');
+  if (flags.includes('amount-mismatch')) warn.push('<div class="notice bad no-print"><b>Amount differs.</b> The amount paid does not match the basket — see History below and check before sending.</div>');
+  if (flags.includes('address-check')) warn.push('<div class="notice warn no-print"><b>Check the address.</b> The customer typed a different address on the card page — see History below.</div>');
+  if (flags.includes('details-missing')) warn.push('<div class="notice warn no-print"><b>Details missing.</b> PayPal confirmed this payment but the shop page did not send the basket. Look the payment up in PayPal for the items and address.</div>');
+  const next = o.status === 'paid' ? ['processing','Start packing'] : null;
+  const canDispatch = ['paid','processing'].includes(o.status);
+  $('drawer').innerHTML =
+  '<header><h2>'+esc(o.order_no)+'</h2><span class="pill st-'+esc(o.status)+'">'+esc(STATUS[o.status]||o.status)+'</span><span class="sp"></span>' +
+    '<button class="btn plain no-print" id="printBtn">Print packing slip</button><button class="btn plain no-print" id="closeBtn" aria-label="Close">Close</button></header>' +
+  '<div class="body">' + warn.join('') +
+    '<div class="slip-only"><p><b>Natural Juices &amp; Vitamins Ltd</b> · naturaljuices.co.uk · 0207 205 2477<br>Packing slip — order '+esc(o.order_no)+' — '+esc(when(o.created_at))+'</p></div>' +
+    (o.status !== 'pending' ? '<div class="panel no-print"><h3>Next step</h3>' +
+      (canDispatch ?
+        '<div class="grid2">'+ '<label class="field"><span>Courier</span><select id="courier">' +
+          ['','Royal Mail','DPD','Evri','Parcelforce','DHL','UPS','Other'].map(c => '<option'+(c===(o.tracking_courier||'')?' selected':'')+' value="'+c+'">'+(c||'— choose —')+'</option>').join('') + '</select></label>' +
+          f('tracking','Tracking number (optional)',o.tracking_number) + '</div>' +
+        '<label class="check"><input type="checkbox" id="notify"'+(state.info.emails?' checked':' disabled')+'> Email the customer to say it’s on its way'+(state.info.emails?'':' <span class="sub">(email not set up yet)</span>')+'</label>' +
+        '<div class="actions"><button class="btn" id="dispatchBtn">Mark as dispatched</button>' + (next ? '<button class="btn ghost" data-status="'+next[0]+'">'+next[1]+'</button>' : '') + '</div>'
+      : o.status === 'dispatched' ?
+        '<p style="margin:0 0 10px">Dispatched '+esc(when(o.dispatched_at))+(o.tracking_number ? ' · '+esc(o.tracking_courier)+' '+esc(o.tracking_number) : '')+'</p><div class="actions"><button class="btn" data-status="delivered">Mark as delivered</button></div>'
+      : '<p style="margin:0">No further action needed.</p>') +
+      '<p class="saved" id="savedMsg" role="status">'+esc(savedMsg||'')+'</p></div>' : '') +
+    '<div class="panel"><h3>Items</h3>' +
+      ((o.items||[]).map(i => '<div class="row"><span>'+i.qty+' × '+esc(i.name)+(i.pack?' <span class="sub">('+esc(i.pack)+')</span>':'')+'</span><span>'+gbp(i.line_pence)+'</span></div>').join('') || '<p class="sub">No item details recorded.</p>') +
+      (o.discount_pence>0 ? '<div class="row"><span>Discount '+esc(o.promo_code)+'</span><span>−'+gbp(o.discount_pence)+'</span></div>' : '') +
+      '<div class="row"><span>Delivery</span><span>Free</span></div>' +
+      '<div class="row total"><span>Total paid</span><span>'+gbp(o.total_pence)+'</span></div>' +
+      (o.customer_notes ? '<p style="margin:10px 0 0"><b>Customer note:</b> '+esc(o.customer_notes)+'</p>' : '') + '</div>' +
+    '<div class="panel slip-only"><h3>Deliver to</h3><p style="margin:0">'+[o.customer_name,o.address,o.city,o.postcode,o.country].filter(Boolean).map(esc).join('<br>')+'<br>'+esc(o.customer_phone)+'</p></div>' +
+    '<div class="panel no-print"><h3>Customer &amp; delivery address</h3>' +
+      '<div class="grid2">'+f('c_name','Name',o.customer_name)+f('c_phone','Phone',o.customer_phone)+'</div>' + f('c_email','Email',o.customer_email,'email') +
+      f('c_address','Address',o.address) + '<div class="grid2">'+f('c_city','City',o.city)+f('c_postcode','Postcode',o.postcode)+'</div>' + f('c_country','Country',o.country) +
+      '<label class="field"><span>Staff note (customers never see this)</span><textarea id="c_notes" rows="2">'+esc(o.admin_notes)+'</textarea></label>' +
+      '<div class="actions"><button class="btn ghost" id="saveBtn">Save changes</button>' +
+      (flags.length ? '<button class="btn plain" id="clearFlags">I’ve checked — clear warnings</button>' : '') + '</div></div>' +
+    '<div class="panel no-print"><h3>Payment</h3>' +
+      '<div class="row"><span>Method</span><span>'+(o.payment_method==='paypal'?'PayPal':'Card (Stripe)')+'</span></div>' +
+      '<div class="row"><span>Reference</span><span style="word-break:break-all;text-align:right">'+esc(o.payment_ref||o.paypal_order_id||o.stripe_session_id||'—')+'</span></div>' +
+      '<div class="row"><span>Confirmed with '+(o.payment_method==='paypal'?'PayPal':'Stripe')+'</span><span>'+(o.payment_verified?'Yes':'No')+'</span></div>' +
+      '<div class="row"><span>Placed</span><span>'+esc(when(o.created_at))+'</span></div></div>' +
+    '<div class="panel no-print"><h3>Change status</h3><div class="actions">' +
+      '<select id="statusSel" style="width:auto">'+Object.keys(STATUS).map(s => '<option value="'+s+'"'+(s===o.status?' selected':'')+'>'+esc(STATUS[s])+'</option>').join('')+'</select>' +
+      '<button class="btn plain" id="statusBtn">Set status</button></div>' +
+      '<p class="sub" style="margin:8px 0 0">Changing the status here does not move any money. Refunds are made in Stripe or PayPal.</p></div>' +
+    '<div class="panel no-print"><h3>History</h3><ul class="hist">'+(events||[]).map(ev => '<li><time>'+esc(when(ev.at))+'</time>'+esc(ev.detail)+'</li>').join('')+'</ul></div>' +
+  '</div>';
+
+  const patch = async (body, msg) => {
+    try { const d = await api('/orders/' + o.id, {method:'PATCH', body}); drawOrder(d.order, d.events, typeof msg === 'function' ? msg(d) : msg); loadSummary(); loadOrders(); }
+    catch(e){ const m = $('savedMsg'); if (m) { m.style.color = 'var(--red)'; m.textContent = e.message; } }
+  };
+  $('closeBtn').addEventListener('click', () => { closeDrawer(); });
+  $('printBtn').addEventListener('click', () => window.print());
+  const dp = $('dispatchBtn');
+  if (dp) dp.addEventListener('click', () => patch({status:'dispatched', tracking_courier:$('courier').value, tracking_number:$('tracking').value.trim(), notify_customer:$('notify').checked},
+    d => 'Marked as dispatched' + (d.emailed ? ' — customer emailed.' : '.')));
+  $('drawer').querySelectorAll('[data-status]').forEach(b => b.addEventListener('click', () => patch({status:b.dataset.status}, 'Updated.')));
+  $('saveBtn').addEventListener('click', () => patch({customer_name:$('c_name').value, customer_phone:$('c_phone').value, customer_email:$('c_email').value,
+    address:$('c_address').value, city:$('c_city').value, postcode:$('c_postcode').value, country:$('c_country').value, admin_notes:$('c_notes').value}, 'Changes saved.'));
+  const cf = $('clearFlags'); if (cf) cf.addEventListener('click', () => patch({clear_flags:true, payment_verified:true}, 'Warnings cleared.'));
+  $('statusBtn').addEventListener('click', () => patch({status:$('statusSel').value}, 'Status updated.'));
+}
+boot();
+})();
+</script>
+</body>
+</html>

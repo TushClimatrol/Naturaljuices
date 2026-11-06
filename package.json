@@ -1,16 +1,19 @@
 {
-  "name": "naturaljuices-stripe-server",
-  "version": "1.0.0",
-  "description": "Stripe Checkout backend for the NaturalJuices store",
+  "name": "naturaljuices-shop-server",
+  "version": "5.0.0",
+  "description": "NaturalJuices shop backend: Stripe checkout, order database, staff order dashboard",
   "main": "stripe-server.js",
   "scripts": {
-    "start": "node stripe-server.js"
+    "start": "node stripe-server.js",
+    "test": "node test/run.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "express": "^4.19.0",
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0",
     "stripe": "^16.0.0"
   }
 }
