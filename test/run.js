@@ -11,6 +11,7 @@ if (!DB) { console.error('Set TEST_DATABASE_URL'); process.exit(1); }
 const PORT = 4311, MOCK = 4312, BASE = 'http://127.0.0.1:' + PORT;
 const WH = 'whsec_test_secret';
 const sessions = {}; const paypalOrders = {};
+const shop = { down: false, catalog: JSON.parse(require('fs').readFileSync(__dirname + '/../catalog.json', 'utf8')) };
 let n = 0;
 
 const mock = http.createServer((req, res) => {
@@ -18,6 +19,11 @@ const mock = http.createServer((req, res) => {
     const send = (code, j) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(j)); };
     const u = req.url.split('?')[0];
     let m;
+    if (req.method === 'GET' && u === '/site/index.html') {
+      if (shop.down) { res.writeHead(500); return res.end('down'); }
+      const cat = shop.catalog.map(p => Object.assign({ cat: 'x', was: p.price }, p));
+      res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<html><script>\nconst CAT = ' + JSON.stringify(cat) + ';\nfoo();</script></html>');
+    }
     if (req.method === 'POST' && u === '/v1/checkout/sessions') {
       const p = new URLSearchParams(body); const id = 'cs_test_' + (++n) + 'abcdefghij';
       let total = 0; for (let i = 0; p.has(`line_items[${i}][quantity]`); i++) total += (+p.get(`line_items[${i}][quantity]`)) * (+p.get(`line_items[${i}][price_data][unit_amount]`));
@@ -69,7 +75,8 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
   await pg.query('DROP TABLE IF EXISTS order_events; DROP TABLE IF EXISTS orders; DROP SEQUENCE IF EXISTS order_no_seq');
   await new Promise(r => mock.listen(MOCK, r));
   const common = { PORT, STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_API_HOST: '127.0.0.1', STRIPE_API_PORT: MOCK, STRIPE_WEBHOOK_SECRET: WH,
-    PAYPAL_API: 'http://127.0.0.1:' + MOCK, MAIL_TEST: '1', ORDER_ALERT_EMAIL: 'shop@example.com', SMTP_HOST: '', SHEET_WEBHOOK_URL: '' };
+    PAYPAL_API: 'http://127.0.0.1:' + MOCK, MAIL_TEST: '1', ORDER_ALERT_EMAIL: 'shop@example.com', SMTP_HOST: '', SHEET_WEBHOOK_URL: '',
+    CATALOG_URL: 'http://127.0.0.1:' + MOCK + '/site/index.html', CATALOG_MAX_AGE_MS: '1' };
   let srv;
   try {
     // ============ 1. No database, no admin password: payments must still work ============
@@ -78,6 +85,16 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
     await waitUp(false);
     let r = await call('POST', '/create-checkout-session', { items: [{ id: 1, qty: 2 }], customer, successUrl: 'https://naturaljuices.co.uk/#/checkout/success' });
     ok(r.status === 200 && /^https:\/\/checkout\.stripe\.test\//.test(r.json.url) && r.json.order_no === null, 'card checkout still starts with no database');
+    // prices follow the live website
+    const noni = shop.catalog.find(p => p.id === 1); const was = JSON.stringify(noni);
+    noni.price = 21.5; noni.packs = noni.packs.map(k => k[0] === 'Pack of 2 Bottles' ? [k[0], 40] : k);
+    r = await call('POST', '/create-checkout-session', { items: [{ id: 1, qty: 1 }, { id: 1, qty: 1, pack: 'Pack of 2 Bottles' }], customer });
+    ok(r.status === 200 && sessions[r.json.url.split('/').pop()].amount_total === 2150 + 4000, 'card checkout uses a price just changed on the website');
+    shop.down = true;
+    r = await call('POST', '/create-checkout-session', { items: [{ id: 1, qty: 1 }], customer });
+    ok(r.status === 200 && sessions[r.json.url.split('/').pop()].amount_total === 2150, 'website unreachable: last known prices still used');
+    shop.down = false; Object.assign(noni, JSON.parse(was));
+    await call('POST', '/create-checkout-session', { items: [{ id: 1, qty: 1 }], customer });
     r = await call('POST', '/orders/paypal', { paypalOrderId: 'PP1234567890', items: [{ id: 1, qty: 1 }], customer });
     ok(r.status === 503 && r.json.retry === true, 'PayPal recording asks the page to retry later');
     r = await call('GET', '/admin/api/orders'); ok(r.status === 503, 'admin locked when no password set');

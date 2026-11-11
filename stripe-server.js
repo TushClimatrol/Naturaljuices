@@ -38,8 +38,38 @@ function stripe() {
   return _stripe;
 }
 
-const CATALOG = JSON.parse(fs.readFileSync(__dirname + '/catalog.json', 'utf8'));
-const byId = Object.fromEntries(CATALOG.map(p => [p.id, p]));
+// ---- Prices: read live from the shop website so card checkout always matches it ----------
+// catalog.json is only the fallback used until the first successful read (or if the site is unreachable).
+const parseCatalog = require('./scripts/parse-catalog');
+let byId = {};
+const catalogState = { source: 'catalog.json (fallback)', updated: null, error: '' };
+function setCatalog(list, source) {
+  byId = Object.fromEntries(list.map(p => [p.id, p]));
+  catalogState.source = source; catalogState.updated = new Date().toISOString(); catalogState.error = '';
+}
+setCatalog(JSON.parse(fs.readFileSync(__dirname + '/catalog.json', 'utf8')), 'catalog.json (fallback)');
+const CATALOG_URL = process.env.CATALOG_URL === 'off' ? '' : (process.env.CATALOG_URL || 'https://naturaljuices.co.uk/index.html');
+let lastCatalogFetch = 0, catalogInflight = null;
+function refreshCatalog() {
+  if (!CATALOG_URL) return Promise.resolve();
+  if (catalogInflight) return catalogInflight;
+  lastCatalogFetch = Date.now();
+  catalogInflight = (async () => {
+    try {
+      const r = await fetch(CATALOG_URL + (CATALOG_URL.includes('?') ? '&' : '?') + 't=' + Date.now(),
+        { headers: { 'Cache-Control': 'no-cache' }, signal: AbortSignal.timeout(6000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      setCatalog(parseCatalog(await r.text()), CATALOG_URL);
+    } catch (e) {
+      catalogState.error = e.message; console.error('price refresh failed (using last known prices):', e.message);
+    } finally { catalogInflight = null; }
+  })();
+  return catalogInflight;
+}
+/** Before taking a card payment, make sure prices are no more than a minute old. */
+async function freshPrices() { if (CATALOG_URL && Date.now() - lastCatalogFetch > (+process.env.CATALOG_MAX_AGE_MS || 60 * 1000)) await refreshCatalog(); }
+refreshCatalog();
+setInterval(refreshCatalog, 5 * 60 * 1000).unref();
 
 const SHOP_URL = 'https://naturaljuices.co.uk';
 const ALLOWED_ORIGINS = [
@@ -426,6 +456,7 @@ app.post('/orders/paypal', rateLimit, async (req, res) => {
 app.post('/create-checkout-session', rateLimit, async (req, res) => {
   try {
     const { items, customer, successUrl, cancelUrl, promo } = req.body || {};
+    await freshPrices();
     const b = priceBasket(items, promo, true);
     const cust = cleanCustomer(customer);
 
@@ -546,7 +577,7 @@ app.get('/admin', (req, res) => {
 app.get('/admin/api/session', (req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ signedIn: isAdmin(req), passwordSet: adminEnabled(), database: db.ready, databaseError: db.ready ? '' : db.error,
-    emails: mailer.enabled, paypalVerify: paypalConfigured(), testMode: /^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY || '') });
+    emails: mailer.enabled, prices: catalogState, paypalVerify: paypalConfigured(), testMode: /^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY || '') });
 });
 app.post('/admin/api/login', loginLimit, (req, res) => {
   res.set('Cache-Control', 'no-store');
