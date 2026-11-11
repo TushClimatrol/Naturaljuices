@@ -26,7 +26,7 @@ The behind-the-scenes server for https://naturaljuices.co.uk (hosted on Render a
 ## When products or prices change on the site
 
 The server reads its prices live from https://naturaljuices.co.uk/index.html (refreshed every 5 minutes and again just before every card payment), so a price changed on the website is charged on card automatically. `catalog.json` is only a fallback used if the website cannot be reached; it can still be refreshed with the command below.
-site's `index.html`, rebuild it and commit:
+To refresh the fallback copy:
 
     node scripts/sync-catalog.js ../naturaljuices-site/index.html
 
