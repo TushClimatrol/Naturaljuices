@@ -62,9 +62,8 @@ function unitPrice(item, strict = true) {
   if (item.pack) {
     const pk = (p.packs || []).find(x => x[0] === item.pack);
     if (!pk) throw new Error('Unknown pack "' + item.pack + '" for ' + p.name);
-    const m = String(pk[0]).match(/\d+/);
-    const bottles = m ? parseInt(m[0], 10) : 1;
-    return { price: pk[1] * bottles, label: p.name + ' — ' + pk[0], name: p.name, pack: pk[0] };
+    // packs are [label, BUNDLE total price] (changed Nov 2026 — previously per-bottle)
+    return { price: pk[1], label: p.name + ' — ' + pk[0], name: p.name, pack: pk[0] };
   }
   return { price: p.price, label: p.name, name: p.name, pack: null };
 }

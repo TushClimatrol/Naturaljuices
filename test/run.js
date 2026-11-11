@@ -93,7 +93,7 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
     r = await call('POST', '/create-checkout-session', { items: [{ id: 1, qty: 2 }, { id: 1, qty: 1, pack: 'Pack of 2 Bottles' }], customer, successUrl: 'https://naturaljuices.co.uk/#/checkout/success', cancelUrl: 'https://evil.example/' });
     ok(r.status === 200 && r.json.order_no === 'NJ-10001', 'card checkout creates order NJ-10001');
     const sid = r.json.url.split('/').pop();
-    ok(sessions[sid].amount_total === 1699 * 2 + 3230, 'server prices the basket itself (2×16.99 + pack 32.30)');
+    ok(sessions[sid].amount_total === 1999 * 2 + 3699, 'server prices the basket itself (2×19.99 + pack of 2 £36.99)');
     ok(sessions[sid].success_url === 'https://naturaljuices.co.uk/?session_id={CHECKOUT_SESSION_ID}#/checkout/success', 'success URL carries the session id');
     r = await call('POST', '/create-checkout-session', { items: [{ id: 2, qty: 1 }], customer });
     ok(r.status === 400 && /out of stock/.test(r.json.error), 'out-of-stock product refused');
@@ -102,7 +102,7 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
     r = await call('POST', '/orders/track', { order_no: 'NJ-10001', email: 'jane@example.com' }); ok(r.status === 404, 'unpaid order is not trackable');
     sessions[sid].payment_status = 'paid';
     r = await call('POST', '/orders/confirm', { session_id: sid });
-    ok(r.json.paid && r.json.order.order_no === 'NJ-10001' && r.json.order.status === 'paid' && r.json.order.total === 66.28, 'paid session confirms the order');
+    ok(r.json.paid && r.json.order.order_no === 'NJ-10001' && r.json.order.status === 'paid' && r.json.order.total === 76.97, 'paid session confirms the order');
     let ev = stripeEvent('checkout.session.completed', sessions[sid]);
     r = await call('POST', '/webhook/stripe', ev.payload, { 'Content-Type': 'application/json', 'stripe-signature': ev.sig });
     ok(r.status === 200, 'Stripe webhook accepted');
@@ -182,7 +182,7 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
     q = await pg.query('SELECT count(*)::int n FROM orders'); ok(q.rows[0].n === 3, 'orders survive a server restart');
     r = await call('POST', '/orders/paypal', { paypalOrderId: 'FAKEFAKEFAKE1', items: [{ id: 1, qty: 1 }], customer });
     ok(r.status === 400, 'made-up PayPal payment is rejected');
-    paypalOrders['REALORDER00001'] = { id: 'REALORDER00001', status: 'COMPLETED', payer: { email_address: 'payer@pp.com' }, purchase_units: [{ amount: { currency_code: 'GBP', value: '16.99' }, payments: { captures: [{ id: 'CAP001', status: 'COMPLETED', amount: { currency_code: 'GBP', value: '16.99' } }] } }] };
+    paypalOrders['REALORDER00001'] = { id: 'REALORDER00001', status: 'COMPLETED', payer: { email_address: 'payer@pp.com' }, purchase_units: [{ amount: { currency_code: 'GBP', value: '19.99' }, payments: { captures: [{ id: 'CAP001', status: 'COMPLETED', amount: { currency_code: 'GBP', value: '19.99' } }] } }] };
     r = await call('POST', '/orders/paypal', { paypalOrderId: 'REALORDER00001', items: [{ id: 1, qty: 1 }], customer });
     q = await pg.query(`SELECT * FROM orders WHERE paypal_order_id='REALORDER00001'`);
     ok(r.status === 200 && q.rows[0].payment_verified && q.rows[0].payment_ref === 'CAP001' && q.rows[0].flags === '', 'real PayPal payment verified and recorded');
@@ -191,10 +191,10 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
     q = await pg.query(`SELECT * FROM orders WHERE paypal_order_id='REALORDER00002'`);
     ok(q.rows[0].flags === 'amount-mismatch' && q.rows[0].total_pence === 100, 'underpaid PayPal order flagged, real amount stored');
     // webhook first, page second
-    r = await call('POST', '/webhook/paypal', { __ok: true, event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { id: 'CAP003', amount: { value: '16.99' }, supplementary_data: { related_ids: { order_id: 'REALORDER00003' } } } });
+    r = await call('POST', '/webhook/paypal', { __ok: true, event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { id: 'CAP003', amount: { value: '19.99' }, supplementary_data: { related_ids: { order_id: 'REALORDER00003' } } } });
     q = await pg.query(`SELECT * FROM orders WHERE paypal_order_id='REALORDER00003'`);
     ok(r.status === 200 && q.rows[0].flags === 'details-missing', 'PayPal webhook alone still records the payment');
-    paypalOrders['REALORDER00003'] = { id: 'REALORDER00003', status: 'COMPLETED', purchase_units: [{ payments: { captures: [{ id: 'CAP003', status: 'COMPLETED', amount: { currency_code: 'GBP', value: '16.99' } }] } }] };
+    paypalOrders['REALORDER00003'] = { id: 'REALORDER00003', status: 'COMPLETED', purchase_units: [{ payments: { captures: [{ id: 'CAP003', status: 'COMPLETED', amount: { currency_code: 'GBP', value: '19.99' } }] } }] };
     r = await call('POST', '/orders/paypal', { paypalOrderId: 'REALORDER00003', items: [{ id: 1, qty: 1 }], customer });
     q = await pg.query(`SELECT * FROM orders WHERE paypal_order_id='REALORDER00003'`);
     ok(q.rows.length === 1 && q.rows[0].flags === '' && q.rows[0].customer_name === 'Jane Tester' && q.rows[0].items.length === 1, '…and the page then fills in the basket (no duplicate)');
