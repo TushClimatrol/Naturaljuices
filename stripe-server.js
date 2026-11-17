@@ -45,6 +45,7 @@ let byId = {};
 const catalogState = { source: 'catalog.json (fallback)', updated: null, error: '' };
 function setCatalog(list, source) {
   byId = Object.fromEntries(list.map(p => [p.id, p]));
+  mailer.setProducts(byId);
   catalogState.source = source; catalogState.updated = new Date().toISOString(); catalogState.error = '';
 }
 setCatalog(JSON.parse(fs.readFileSync(__dirname + '/catalog.json', 'utf8')), 'catalog.json (fallback)');
@@ -647,6 +648,16 @@ app.get('/admin/api/summary', requireAdmin, async (req, res) => {
       FROM orders`);
     res.json(r.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/admin/api/orders/:id/email/:kind', requireAdmin, async (req, res) => {
+  try {
+    const o = (await db.query('SELECT * FROM orders WHERE id=$1', [parseInt(req.params.id, 10)])).rows[0];
+    if (!o) return res.status(404).send('Order not found');
+    const fn = { confirmation: mailer.preview.confirmationHtml, dispatched: mailer.preview.dispatchedHtml, alert: mailer.preview.alertHtml }[req.params.kind];
+    if (!fn) return res.status(404).send('Unknown email');
+    res.set('Content-Security-Policy', "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'");
+    res.type('html').send(fn(o));
+  } catch (e) { res.status(500).send(e.message); }
 });
 app.get('/admin/api/orders/:id', requireAdmin, async (req, res) => {
   try {

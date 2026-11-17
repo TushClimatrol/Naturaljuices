@@ -333,7 +333,8 @@ function drawOrder(o, events, savedMsg){
       '<div class="row"><span>Method</span><span>'+(o.payment_method==='paypal'?'PayPal':'Card (Stripe)')+'</span></div>' +
       '<div class="row"><span>Reference</span><span style="word-break:break-all;text-align:right">'+esc(o.payment_ref||o.paypal_order_id||o.stripe_session_id||'—')+'</span></div>' +
       '<div class="row"><span>Confirmed with '+(o.payment_method==='paypal'?'PayPal':'Stripe')+'</span><span>'+(o.payment_verified?'Yes':'No')+'</span></div>' +
-      '<div class="row"><span>Placed</span><span>'+esc(when(o.created_at))+'</span></div></div>' +
+      '<div class="row"><span>Placed</span><span>'+esc(when(o.created_at))+'</span></div>' +
+      '<p class="sub" style="margin:8px 0 0">Emails: <a href="/admin/api/orders/'+o.id+'/email/confirmation" target="_blank" rel="noopener">preview confirmation</a> · <a href="/admin/api/orders/'+o.id+'/email/dispatched" target="_blank" rel="noopener">preview dispatch email</a></p></div>' +
     '<div class="panel no-print"><h3>Change status</h3><div class="actions">' +
       '<select id="statusSel" style="width:auto">'+Object.keys(STATUS).map(s => '<option value="'+s+'"'+(s===o.status?' selected':'')+'>'+esc(STATUS[s])+'</option>').join('')+'</select>' +
       '<button class="btn plain" id="statusBtn">Set status</button></div>' +

@@ -5,7 +5,7 @@ module.exports = function parseCatalog(html) {
   const from = html.indexOf('[', start);
   const end = html.indexOf('\n', from);
   const cat = JSON.parse(html.slice(from, end).trim().replace(/;$/, ''));
-  const slim = cat.map(p => ({ id: p.id, name: p.name, price: p.price, out: !!p.out, packs: p.packs || [] }));
+  const slim = cat.map(p => ({ id: p.id, name: p.name, price: p.price, out: !!p.out, packs: p.packs || [], img: typeof p.img === 'string' ? p.img : '' }));
   const ids = new Set(slim.map(p => p.id));
   if (slim.length < 10 || ids.size !== slim.length || slim.some(p => typeof p.id !== 'number' || !(p.price > 0) ||
       !Array.isArray(p.packs) || p.packs.some(k => typeof k[0] !== 'string' || !(k[1] > 0)))) throw new Error('Catalog looks wrong');
