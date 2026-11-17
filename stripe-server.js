@@ -649,6 +649,18 @@ app.get('/admin/api/summary', requireAdmin, async (req, res) => {
     res.json(r.rows[0]);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+/** Re-sends the "new order" alert for one order to the shop's alert address. */
+app.post('/admin/api/orders/:id/resend-alert', requireAdmin, async (req, res) => {
+  try {
+    const o = (await db.query('SELECT * FROM orders WHERE id=$1', [parseInt(req.params.id, 10)])).rows[0];
+    if (!o) return res.status(404).json({ error: 'Order not found' });
+    const to = mailer.alertAddress();
+    const ok = await mailer.orderAlert(o);
+    await db.event(o.id, 'email', ok ? 'Order details emailed to ' + to : 'Could not email order details to ' + (to || '(no alert address set)'));
+    const ev = await db.query('SELECT at, type, detail FROM order_events WHERE order_id=$1 ORDER BY at, id', [o.id]);
+    res.json({ ok, to, events: ev.rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 app.get('/admin/api/orders/:id/email/:kind', requireAdmin, async (req, res) => {
   try {
     const o = (await db.query('SELECT * FROM orders WHERE id=$1', [parseInt(req.params.id, 10)])).rows[0];

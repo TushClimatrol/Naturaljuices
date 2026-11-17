@@ -175,6 +175,9 @@ const customer = { name: 'Jane Tester', email: 'Jane@Example.com', phone: '07700
     r = await call('PATCH', '/admin/api/orders/' + id1, { status: 'dispatched', tracking_courier: 'Royal Mail', tracking_number: 'AB123456789GB', notify_customer: true }, H);
     ok(r.status === 200 && r.json.order.status === 'dispatched' && r.json.order.dispatched_at && r.json.emailed === true, 'mark as dispatched with tracking + customer email');
     r = await call('PATCH', '/admin/api/orders/' + id1, { status: 'nonsense' }, H); ok(r.status === 400, 'unknown status refused');
+    r = await call('POST', '/admin/api/orders/' + id1 + '/resend-alert', {}, H);
+    ok(r.status === 200 && r.json.ok === true && r.json.to === 'shop@example.com' && r.json.events.some(e => /emailed to shop@example.com/.test(e.detail)), 'staff can re-send an order\'s details to the shop address');
+    r = await call('POST', '/admin/api/orders/' + id1 + '/resend-alert', {}); ok(r.status === 401, 're-send needs sign-in');
     r = await call('PATCH', '/admin/api/orders/' + id1, 'status=delivered', Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, H)); ok(r.status === 415, 'non-JSON (cross-site form) update refused');
     r = await call('PATCH', '/admin/api/orders/' + id1, { admin_notes: 'Left with neighbour', clear_flags: true }, H);
     ok(r.json.order.flags === '' && r.json.events.some(e => /Status changed: paid → dispatched/.test(e.detail)), 'notes saved, warnings cleared, history kept');

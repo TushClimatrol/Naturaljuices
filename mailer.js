@@ -205,17 +205,20 @@ function textFallback(o, intro) {
     '\nTotal: ' + gbp(o.total_pence) + '\n\nTrack your order: ' + trackUrl(o) + '\n\nNatural Juices & Vitamins Ltd - 0207 205 2477 - naturaljuices.co.uk';
 }
 
+/** "New order" alert to the shop's alert address. */
+async function orderAlert(o) {
+  if (!enabled || !SHOP()) return false;
+  const method = o.payment_method === 'paypal' ? 'PayPal' : 'Card';
+  return send({
+    to: SHOP(), replyTo: o.customer_email || undefined,
+    subject: `New order ${o.order_no} — ${gbp(o.total_pence)} (${method})${o.livemode ? '' : ' [TEST]'}`,
+    html: alertHtml(o), text: textFallback(o, 'New order ' + o.order_no + ' from ' + o.customer_name + ' (' + method + ')'),
+  });
+}
 /** Alert to the shop + confirmation to the customer when an order is paid. */
 async function orderPaid(o) {
   if (!enabled) return;
-  const method = o.payment_method === 'paypal' ? 'PayPal' : 'Card';
-  if (SHOP()) {
-    await send({
-      to: SHOP(), replyTo: o.customer_email || undefined,
-      subject: `New order ${o.order_no} — ${gbp(o.total_pence)} (${method})${o.livemode ? '' : ' [TEST]'}`,
-      html: alertHtml(o), text: textFallback(o, 'New order ' + o.order_no + ' from ' + o.customer_name + ' (' + method + ')'),
-    });
-  }
+  await orderAlert(o);
   if (o.customer_email) {
     await send({
       to: o.customer_email, replyTo: SHOP() || undefined,
@@ -236,4 +239,4 @@ async function orderDispatched(o) {
   });
 }
 
-module.exports = { enabled, orderPaid, orderDispatched, sent, setProducts: m => { products = m || {}; }, preview: { confirmationHtml, dispatchedHtml, alertHtml } };
+module.exports = { enabled, orderPaid, orderDispatched, orderAlert, alertAddress: SHOP, sent, setProducts: m => { products = m || {}; }, preview: { confirmationHtml, dispatchedHtml, alertHtml } };
