@@ -210,7 +210,7 @@ async function orderAlert(o) {
   if (!enabled || !SHOP()) return false;
   const method = o.payment_method === 'paypal' ? 'PayPal' : 'Card';
   return send({
-    to: SHOP(), replyTo: o.customer_email || undefined,
+    to: SHOP(), // no Reply-To: Yahoo rejects messages whose Reply-To is not one of the account's addresses
     subject: `New order ${o.order_no} — ${gbp(o.total_pence)} (${method})${o.livemode ? '' : ' [TEST]'}`,
     html: alertHtml(o), text: textFallback(o, 'New order ' + o.order_no + ' from ' + o.customer_name + ' (' + method + ')'),
   });
